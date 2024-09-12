@@ -2,7 +2,7 @@
 ## Description
 This mod for Persona 3 FES introduces several quality-of-life improvements to the camp menu, allowing for more efficient management of personas and their skills.
 
-# Features
+### Features
 - Swap Persona's Order Quickly: Press L1/R1 to swap the current persona with your upper/down persona respectively.
 - Quick Persona Assignment: Assign a persona directly from the persona list of the camp menu with the Triangle button.
 - View Skill Details: Press Square to open a cursor in the persona details view and see a skill help window with descriptions of each skill.

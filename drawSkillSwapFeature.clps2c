@@ -1,0 +1,203 @@
+set drawSwapMenu 0x009D7620
+
+// GLOBALS //
+// 0x009D6BE0 -> Super Index
+// 0x009D6BE4 -> Sub Index
+// 0x009D6BE8 -> Current persona number of next skill list
+// 0x009D6BEC -> Draw skill swap elements flag
+// 0x009D6BF0 -> Current persona next skill list
+// GLOBALS //
+
+ASM_START 0x0012BBB8
+    j 0x009D7620
+    nop
+ASM_END
+
+ASM_START drawSwapMenu
+    jal 0x001159f0 // Draw SPR original call
+    nop
+
+    addiu $sp, $sp, -0xe0
+
+    sd $ra, 0x90($sp)
+    sd $fp, 0x80($sp)
+    sd $s7, 0x70($sp)
+    sd $s6, 0x60($sp)
+    sd $s5, 0x50($sp)
+    sd $s4, 0x40($sp)
+    sd $s3, 0x30($sp)
+    sd $s2, 0x20($sp)
+    sd $s1, 0x10($sp)
+    sd $s0, 0x0($sp)
+
+    swc1 $f0,  0xA0($sp)
+    swc1 $f1,  0xA4($sp)
+    swc1 $f12, 0xA8($sp)
+    swc1 $f13, 0xAC($sp)
+    swc1 $f14, 0xB0($sp)
+    swc1 $f15, 0xB4($sp)
+    swc1 $f20, 0xB8($sp)
+    swc1 $f21, 0xBC($sp)
+    swc1 $f22, 0xC0($sp)
+    swc1 $f23, 0xC4($sp)
+    swc1 $f26, 0xC8($sp)
+    swc1 $f29, 0xCC($sp)
+    swc1 $f31, 0xD0($sp)
+
+    lui $v0, 0x009D
+    lh $v0, 0x6BEC($v0)
+    beq $v0, $zero, endSkillSwapDraw
+    nop
+
+    // INDEX 0
+    li $v0, 0x19 // Skill container initial X position, in float for $f22
+    mtc1 $v0, $f22
+    cvt.s.w $f22, $f22
+
+    lui $v1, 0x009D
+    lh $v1, 0x6BE0($v1) // Load super index
+    li $v0, 0x1
+    bne $v0, $v1, checkLastIndex
+    nop
+    // INDEX 1
+    li $v0, 0xD7 // Skill container initial X position, in float for $f22
+    mtc1 $v0, $f22
+    cvt.s.w $f22, $f22
+
+    beq $zero, $zero, setContainerY
+    nop
+
+    checkLastIndex: li $v0, 0x2
+    bne $v0, $v1, setContainerY
+    nop
+    // INDEX 2
+    li $v0, 0x195 // Skill container initial X position, in float for $f22
+    mtc1 $v0, $f22
+    cvt.s.w $f22, $f22
+
+    setContainerY: li $v0, 0x135 // Skill container initial Y position, in float for $f23
+    mtc1 $v0, $f23
+    cvt.s.w $f23, $f23
+
+    lui $a1, 0x009D
+    lh $a1, 0x6BE4($a1) // Load sub index
+    li $a2, 0x18
+    mult $a1, $a2
+    mflo $a1 // Get mult result
+
+    mtc1 $a1, $f13
+    cvt.s.w $f13, $f13
+    add.s $f23, $f13, $f23 // Add sub-index offset for cursor movement
+
+    li $v0, 0x2
+    bne $v0, $v1, drawCursorSPR
+    nop
+
+    li $v0, 0x14d // Special position for index 2 (NEXT skill)
+    mtc1 $v0, $f23
+    cvt.s.w $f23, $f23
+
+    drawCursorSPR: li $a0, 0x0
+    lui $v0,0x0083
+    lw $a1,0x3B90($v0)
+    addiu $a2,$zero,0x23
+    mov.s $f12,$f22 // X Postion
+    mov.s $f13,$f23 // Y Position
+    mov.s $f14,$f29
+    addiu $a3, $zero,0x0000
+    addiu $t0,$zero,0x00
+    addiu $t1,$zero,0x00
+    addiu $t2,$zero,0x00
+    jal 0x001159f0
+    nop
+
+
+
+    li $v0, 0x12e // Skill help X
+    mtc1 $v0, $f22
+    cvt.s.w $f22, $f22
+
+    li $v0, 0xE0 // Skill help Y
+    mtc1 $v0, $f23
+    cvt.s.w $f23, $f23
+
+
+    li $a0, 0x0
+    lui $v0,0x0083
+    lw $a1,0x3B90($v0)
+    addiu $a2,$zero,0x24
+    mov.s $f12,$f22 // X Postion
+    mov.s $f13,$f23 // Y Position
+    mov.s $f14,$f29
+    addiu $a3, $zero,0x0000
+    addiu $t0,$zero,0x00
+    addiu $t1,$zero,0x00
+    addiu $t2,$zero,0x00
+    jal 0x001159f0
+    nop
+
+
+
+    // DRAW CURRENT SELECTED SKILL DESCRIPTION //
+    li $v0, 0x2
+    lui $v1, 0x009D
+    lh $v1, 0x6BE0($v1) // Load super index
+    bne $v0, $v1, getPersonaSkill
+    nop
+    lui $t2, 0x009D
+    lhu $t2, 0x6BF0($t2) // Load first next skill
+
+    beq $zero, $zero, drawSelectedSkill
+    nop
+
+    getPersonaSkill: sll $v1, $v1, 0x2 // Super index offset
+    lui $v0, 0x009D
+    lh $v0, 0x6BE4($v0) // Load sub index
+    addu $v0, $v0, $v1 // Get total persona skill offset
+    sll $v0, $v0, 0x1 // Convert it to half offset for skill array
+    addiu $v1, $s3, 0xc // Get to the start of the skill array
+    addu $v0, $v0, $v1 // Current skill address
+    
+    lhu $t2, 0x0($v0) // Get current skill half
+    beq $t2, $zero, endSkillSwapDraw // Don't show description if it is blank
+    nop
+    drawSelectedSkill: li $a0, 0x13c // X position
+    li $a1, 0x100 // Y position
+    addiu $a2,$zero,-0x1 // Font RGBA
+    addiu $a3,$zero,0x1 // Font scale
+    addiu $t0,$zero,0x6 // Font preset color
+    addiu $t1,$zero,0x3
+    jal 0x003C7E20 // Print current element description
+    nop
+    // END DRAW CURRENT SELECTED SKILL DESCRIPTION //
+
+
+    endSkillSwapDraw: lwc1 $f0,  0xA0($sp)
+    lwc1 $f1,  0xA4($sp)
+    lwc1 $f12, 0xA8($sp)
+    lwc1 $f13, 0xAC($sp)
+    lwc1 $f14, 0xB0($sp)
+    lwc1 $f15, 0xB4($sp)
+    lwc1 $f20, 0xB8($sp)
+    lwc1 $f21, 0xBC($sp)
+    lwc1 $f22, 0xC0($sp)
+    lwc1 $f23, 0xC4($sp)
+    lwc1 $f26, 0xC8($sp)
+    lwc1 $f29, 0xCC($sp)
+    lwc1 $f31, 0xD0($sp)
+    
+    ld $ra, 0x90($sp)
+    ld $fp, 0x80($sp)
+    ld $s7, 0x70($sp)
+    ld $s6, 0x60($sp)
+    ld $s5, 0x50($sp)
+    ld $s4, 0x40($sp)
+    ld $s3, 0x30($sp)
+    ld $s2, 0x20($sp)
+    ld $s1, 0x10($sp)
+    ld $s0, 0x0($sp)
+
+    addiu $sp, $sp, 0xe0
+    j 0x0012BBC0
+    nop
+ASM_END

@@ -1,0 +1,179 @@
+set insertCustomPersonaListFeatures 0x009D6000
+
+// GLOBALS //
+// 009D5FA0 -> Auxiliar copy of persona info to swap
+// GLOBALS //
+
+
+ASM_START 0x001318E0
+    j 0x009D6000
+    nop
+ASM_END
+
+ASM_START insertCustomPersonaListFeatures
+    beq $v0, $zero, downJoystickButtonNotPressed
+    nop
+    j 0x001318E8
+    nop
+    downJoystickButtonNotPressed: lui $v0, 0x7e
+    lhu $v0, 0x094e($v0)
+    andi $v1, $a0, 0x10
+    beq $v1, $zero, TriangleNotPressed
+    nop
+
+    li $a0, 0x1
+    li $a1, 0x0
+    li $a2, 0x2
+    li $a3, 0x4
+    jal 0x0010a4e0 // Make persona change sound
+    nop
+
+    lw $v0, 0x4($s0)
+    sll $v0, $v0, 0x1
+    addu $v0, $v0, $s0
+    lh $a0, 0x32($v0)
+    jal 0x00175200
+    nop
+    li $a0, 0x1
+    jal 0x0016c860
+    nop
+    move $a0, $v0
+    jal 0x0011b370
+    nop
+
+    beq $zero, $zero, endOfButtonHandling
+    nop
+
+    TriangleNotPressed: lh $v0, 0x4a($s0)
+    li $v1, 0x1
+    beq $v0, $v1, endOfButtonHandling // Persona list only has one element
+    nop
+
+    lui $v0, 0x7e
+    lhu $a0, 0x094e($v0)
+    andi $v1, $a0, 0x4
+    beq $v1, $zero, L1NotPressed
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x5
+    jal 0x0010a4e0 // Play swap sound
+    nop
+
+    addiu $sp, $sp, -0x30
+
+    lw $v0, 0x4($s0)
+    sd $v0, 0x0($sp) // Save initial index
+
+    bne $v0, $zero, notFirstElement
+    lw $v0, 0x4($s0)
+    lh $v0, 0x4a($s0)
+    notFirstElement: addiu $v0, $v0, -0x1
+    sw $v0, 0x4($s0) // Update final index
+
+    beq $zero, $zero, swapPersonas // Go to R2 persona swap code since is exactly the same code for both
+    nop
+
+    L1NotPressed: andi $v1, $a0, 0x8
+    beq $v1, $zero, endOfButtonHandling
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x5
+    jal 0x0010a4e0 // Play swap sound
+    nop
+
+    addiu $sp, $sp, -0x30
+
+    lw $v0, 0x4($s0)
+    sd $v0, 0x0($sp) // Save initial index
+
+    lh $v1, 0x4a($s0)
+    addiu $v1, $v1, -0x1
+    bne $v0, $v1, notLastElement
+    lw $v0, 0x4($s0)
+    li $v0, -0x1
+    notLastElement: addiu $v0, $v0, 0x1
+    sw $v0, 0x4($s0) // Update final index
+
+    swapPersonas: ld $a0, 0x0($sp)
+    jal 0x00174a90 // Get first persona address
+    nop
+  
+    sd $v0, 0x10($sp) // Save first persona address
+
+    lui $a0, 0x009D
+    addiu $a0, 0x5FA0
+    move $a1, $v0
+    li $a2, 0x24
+    jal 0x00521250 // Copy the whole persona into an auxiliar memory region
+    nop
+
+    ld $a0, 0x10($sp) // Get first persona address
+    li $a1, 0x0
+    li $a2, 0x24
+    jal 0x00521408 // Memset the original first persona memory region to 0
+    nop
+
+    lw $a0, 0x4($s0)
+    jal 0x00174a90 // Get second persona address
+    nop
+
+    sd $v0, 0x20($sp) // Save second persona address
+
+    ld $a0, 0x10($sp) // First persona address
+    move $a1, $v0 // Second persona address
+    li $a2, 0x24
+    jal 0x00521250 // Copy the whole second persona into the first persona memory region
+    nop
+
+    ld $a0, 0x20($sp) // Second persona address
+    lui $a1, 0x009D // First persona initial copy
+    addiu $a1, 0x5FA0
+    li $a2, 0x24
+    jal 0x00521250 // Copy the whole second persona into the first persona memory region
+    nop
+
+    ld $v1, 0x0($sp) // Load first persona index
+    sll $v0, $v1, 0x1
+    addu $v0, $s0, $v0
+    addiu $a0, $v0, 0x1a
+    lh $a1, 0x0($a0) // Get first persona id
+
+    lw $v1, 0x4($s0) // Load second persona index
+    sll $v0, $v1, 0x1
+    addu $v0, $s0, $v0
+    addiu $a2, $v0, 0x1a
+    lh $a3, 0x0($a2) // Get second persona id
+
+    sh $a1, 0x0($a2) // Save first persona id in second persona tmx print structure
+    sh $a3, 0x0($a0) // Save second persona id in first persona tmx print structure
+
+    ld $v0, 0x0($sp) // Get first persona index
+    lui $a0, 0x0083
+    addiu $a0, $a0, 0x6ba8 // Get equipped persona index address
+    lh $v1, 0x0($a0) // Get equipped persona index
+
+    beq $v0,$v1,swapEquippedPersonaIndex
+    lw $v0, 0x4($s0) // Load second persona index for possible swap
+    bne $v0,$v1,skipSwapEquippedPersonaIndex
+    nop
+    ld $v0, 0x0($sp) // Load first persona index for swap
+    swapEquippedPersonaIndex: sh $v0, 0x0($a0)
+    skipSwapEquippedPersonaIndex: addiu $sp, $sp, 0x30
+
+
+    lui $a0, 0x009D // Global persona copy
+    addiu $a0, 0x5FA0
+    li $a1, 0x0
+    li $a2, 0x24
+    jal 0x00521408 // Reset persona copy memory region to 0
+    nop
+
+    endOfButtonHandling: j 0x00131974
+    nop
+ASM_END

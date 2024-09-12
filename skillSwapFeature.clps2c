@@ -1,0 +1,217 @@
+set addNewCaseSkillSwap 0x009D6C00
+set addSquareButtonBehaviour 0x009D6C40
+
+set skillSwapHandler 0x009D6CB0
+
+// GLOBALS //
+// 0x009D6BE0 -> Super Index
+// 0x009D6BE4 -> Sub Index
+// 0x009D6BE8 -> Current persona number of next skill list
+// 0x009D6BEC -> Draw skill swap elements flag
+// 0x009D6BF0 -> Temporal current persona next skill list
+// GLOBALS //
+
+ASM_START 0x001311f0
+    j 0x009D6C00
+    lw $s0, 0x3c($a0)
+ASM_END
+
+ASM_START addNewCaseSkillSwap
+    lw $v0, 0x0($s0)
+    li $v1, 0x10
+    beq $v0, $v1, skillSwapHandler
+    nop
+    j 0x001311f8
+    nop
+    skillSwapHandler: j 0x009D6CB0
+    nop
+ASM_END
+
+
+ASM_START 0x0013243c
+    j 0x009D6C40
+    lui $v0, 0x7e
+ASM_END
+
+ASM_START addSquareButtonBehaviour
+    lhu $a0, 0x094e($v0)
+    andi $v0, $a0, 0x80
+    beq $v0, $zero, squareNotPressed
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x1
+    jal 0x0010a4e0 // Play square sound
+    nop
+
+    li $v0, 0x10
+    sw $v0, 0x0($s0) // Store new case for our skill swap
+
+    j 0x00132648
+    nop
+    squareNotPressed: j 0x00132444
+    nop
+ASM_END
+
+
+ASM_START skillSwapHandler
+    li $v1, 0x1
+    lui $v0, 0x009D
+    sh $v1, 0x6BEC($v0) // Set flag to draw skill swap elements
+    
+    lui $v0, 0x7e
+    lhu $a0, 0x094e($v0)
+    andi $v0, $a0, 0x20
+    beq $v0, $zero, backNotPressed
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x2
+    jal 0x0010a4e0 // Play back sound
+    nop
+
+    lui $a0, 0x009D
+    addiu $a0, $a0, 0x6BE0 // Globals pointer
+    li $a1, 0x0
+    li $a2, 0x20
+    jal 0x00521408 // Reset all globals when going back
+    nop
+
+    li $v0, 0x8
+    sw $v0, 0x0($s0) // Store persona info case
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    backNotPressed: lw $a0, 0x4($s0) 
+    jal 0x00174a90 // Get current persona we are viewing
+    nop
+    move $a0, $v0
+    lui $a2, 0x009D
+    addiu $a1, $a2, 0x6BF0
+    addiu $a2, $a2, 0x6BE8
+    jal 0x001fb1f0
+    nop
+
+    lui $v0, 0x7e
+    lhu $a1, 0x0952($v0)
+    andi $v1, $a1, 0x4000
+    beq $v1, $zero, downNotPressed
+    nop
+    // DOWN BEHAVIOUR
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE0($a0) // Get super index
+    li $v1, 0x2
+    beq $v0, $v1, continuePersonaInfoDraw
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x0
+    jal 0x0010a4e0 // Play move sound
+    nop
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE4($a0) // Get sub index
+    li $v1, 0x3
+    beq $v0, $v1, lastSubIndex
+    li $v1, 0x0
+    addiu $v1, $v0, 0x1
+    lastSubIndex: sw $v1, 0x6BE4($a0)
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    downNotPressed: andi $v1, $a1, 0x1000
+    beq $v1, $zero, upNotPressed
+    nop 
+    // UP BEHAVIOUR
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE0($a0) // Get super index
+    li $v1, 0x2
+    beq $v0, $v1, continuePersonaInfoDraw
+    nop
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x0
+    jal 0x0010a4e0 // Play move sound
+    nop
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE4($a0) // Get sub index
+    li $v1, 0x0
+    beq $v0, $v1, firstSubIndex
+    li $v1, 0x3
+    addiu $v1, $v0, -0x1
+    firstSubIndex: sw $v1, 0x6BE4($a0)
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    upNotPressed: andi $v1, $a1, 0x8000
+    beq $v1, $zero, leftNotPressed
+    nop 
+    // LEFT BEHAVIOUR
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x0
+    jal 0x0010a4e0 // Play move sound
+    nop
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE0($a0) // Get super index
+    li $v1, 0x0
+    beq $v0, $v1, firstSuperIndex
+    nop
+    addiu $v1, $v0, -0x1
+    beq $zero, $zero, saveLeftSuperIndex
+    nop
+    firstSuperIndex: lh $v0, 0x6BE8($a0) // Get next number of skills
+    bne $v0, $zero, saveLeftSuperIndex
+    li $v1, 0x2
+    li $v1, 0x1
+    saveLeftSuperIndex: sw $v1, 0x6BE0($a0)
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    leftNotPressed: andi $v1, $a1, 0x2000
+    beq $v1, $zero, continuePersonaInfoDraw
+    nop 
+    // RIGHT BEHAVIOUR
+
+    li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x0
+    jal 0x0010a4e0 // Play move sound
+    nop
+
+    lui $a0, 0x009D
+    lh $v0, 0x6BE0($a0) // Get super index
+    lh $a1, 0x6BE8($a0) // Get next number of skills
+    beq $a1, $zero, decideLastValue
+    li $v1, 0x1
+    li $v1, 0x2
+    decideLastValue: beq $v0, $v1, lastSuperIndex
+    li $v1, 0x0
+    addiu $v1, $v0, 0x1
+    lastSuperIndex: sw $v1, 0x6BE0($a0)
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    continuePersonaInfoDraw: j 0x00132648
+    nop
+ASM_END

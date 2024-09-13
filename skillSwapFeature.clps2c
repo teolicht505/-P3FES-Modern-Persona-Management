@@ -96,15 +96,19 @@ ASM_START skillSwapHandler
     addiu $a2, $a2, 0x6BE8
     jal 0x001fb1f0
     nop
-
-    lui $v0, 0x7e
+    
+    lui $v0, 0x007e
+    lhu $a2, 0x095A($v0)
+    andi $v1, $a2, 0x4000
+    bne $v1, $zero, downPressed
+    nop
     lhu $a1, 0x0952($v0)
     andi $v1, $a1, 0x4000
     beq $v1, $zero, downNotPressed
     nop
     // DOWN BEHAVIOUR
 
-    lui $a0, 0x009D
+    downPressed: lui $a0, 0x009D
     lh $v0, 0x6BE0($a0) // Get super index
     li $v1, 0x2
     beq $v0, $v1, continuePersonaInfoDraw
@@ -128,12 +132,15 @@ ASM_START skillSwapHandler
     beq $zero, $zero, continuePersonaInfoDraw
     nop
 
-    downNotPressed: andi $v1, $a1, 0x1000
+    downNotPressed: andi $v1, $a2, 0x1000
+    bne $v1, $zero, upPressed
+    nop 
+    andi $v1, $a1, 0x1000
     beq $v1, $zero, upNotPressed
     nop 
     // UP BEHAVIOUR
 
-    lui $a0, 0x009D
+    upPressed: lui $a0, 0x009D
     lh $v0, 0x6BE0($a0) // Get super index
     li $v1, 0x2
     beq $v0, $v1, continuePersonaInfoDraw
@@ -157,12 +164,15 @@ ASM_START skillSwapHandler
     beq $zero, $zero, continuePersonaInfoDraw
     nop
 
-    upNotPressed: andi $v1, $a1, 0x8000
+    upNotPressed: andi $v1, $a2, 0x8000
+    bne $v1, $zero, leftPressed
+    nop 
+    andi $v1, $a1, 0x8000
     beq $v1, $zero, leftNotPressed
     nop 
     // LEFT BEHAVIOUR
 
-    li $a0, 0x0
+    leftPressed: li $a0, 0x0
     li $a1, 0x0
     li $a2, 0x0
     li $a3, 0x0
@@ -186,12 +196,15 @@ ASM_START skillSwapHandler
     beq $zero, $zero, continuePersonaInfoDraw
     nop
 
-    leftNotPressed: andi $v1, $a1, 0x2000
+    leftNotPressed: andi $v1, $a2, 0x2000
+    bne $v1, $zero, rightPressed
+    nop 
+    andi $v1, $a1, 0x2000
     beq $v1, $zero, continuePersonaInfoDraw
     nop 
     // RIGHT BEHAVIOUR
 
-    li $a0, 0x0
+    rightPressed: li $a0, 0x0
     li $a1, 0x0
     li $a2, 0x0
     li $a3, 0x0

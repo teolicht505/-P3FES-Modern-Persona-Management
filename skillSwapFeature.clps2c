@@ -4,6 +4,11 @@ set addSquareButtonBehaviour 0x009D6C40
 set skillSwapHandler 0x009D6CB0
 
 // GLOBALS //
+// 0x009D6BD0 -> Skill A Super Index
+// 0x009D6BD2 -> Skill A Sub Index
+
+// 0x009D6BD8 -> First skill swap chosen
+// 0x009D6BDC -> Current persona quick access
 // 0x009D6BE0 -> Super Index
 // 0x009D6BE4 -> Sub Index
 // 0x009D6BE8 -> Current persona number of next skill list
@@ -75,6 +80,24 @@ ASM_START skillSwapHandler
     nop
 
     lui $a0, 0x009D
+    lw $v0, 0x6BD8($a0)
+    beq $v0, $zero, resetGlobals
+    nop
+
+    sw $zero, 0x6BD8($a0) // Reset swap first chosen skill swap
+
+    lh $v0, 0x6BD0($a0) // Get skill A super index
+    lh $v1, 0x6BD2($a0) // Get skill A sub index
+
+    sh $v0, 0x6BE0($a0) // Go back to the previously selected super index
+    sh $v1, 0x6BE4($a0) // Go back to the previously selected sub index
+
+    sw $zero, 0x6BD0($a0) // Reset skill A super/sub index
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    resetGlobals: lui $a0, 0x009D
     addiu $a0, $a0, 0x6BE0 // Globals pointer
     li $a1, 0x0
     li $a2, 0x20
@@ -92,12 +115,108 @@ ASM_START skillSwapHandler
     nop
     move $a0, $v0
     lui $a2, 0x009D
+    sw $a0, 0x6BDC($a2) // Store current persona for quick access later
     addiu $a1, $a2, 0x6BF0
     addiu $a2, $a2, 0x6BE8
     jal 0x001fb1f0
     nop
+
+    lui $v0, 0x7e
+    lhu $a0, 0x094e($v0)
+    andi $v0, $a0, 0x40
+    beq $v0, $zero, swapConfirmNotPressed
+    nop
+
+    li $v0, 0x2
+    lui $v1, 0x009D
+    lh $v1, 0x6BE0($v1) // Load super index
+    bne $v0, $v1, continueSwapChecks
+    nop
+
+    wrongInputPath: li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x8
+    jal 0x0010a4e0 // Play wrong sound when index is next skill
+    nop
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+
+    continueSwapChecks: lui $a0, 0x009D
+    lw $a2, 0x6BDC($a0) // Load current persona
+    lh $v1, 0x6BE0($a0) // Load super index
+    sll $v1, $v1, 0x2
+    lh $v0, 0x6BE4($a0) // Load sub index
+    addu $v0, $v0, $v1 // Get total persona skill offset
+    sll $v0, $v0, 0x1 // Convert it to half offset for skill array
+    addiu $v1, $a2, 0xc // Get to the start of the skill array
+    addu $a1, $v0, $v1 // Current skill address
+    lhu $a2, 0x0($a1) // Get current skill half
+
+    beq $a2, $zero, wrongInputPath // Skill is blank so its not choosable
+    nop
+
+    lui $a0, 0x009D
+    lw $v0, 0x6BD8($a0)
+    bne $v0, $zero, alreadyChoseSkill
+    nop
     
-    lui $v0, 0x007e
+    lh $v0, 0x6BE0($a0)
+    sh $v0, 0x6BD0($a0) // Store current super index to skill swap A super index
+
+    lh $v0, 0x6BE4($a0)
+    sh $v0, 0x6BD2($a0) // Store current sub index to skill swap A sub index
+
+    li $v0, 0x1
+    sw $v0, 0x6BD8($a0)
+
+    beq $zero, $zero, playConfirmSound
+    nop
+    
+    alreadyChoseSkill: lh $v0, 0x6BE0($a0) // Get current selected super index
+    lh $v1, 0x6BD0($a0) // Get current skill A super index
+
+    bne $v0, $v1, isDifferentPosition
+    nop
+
+    lh $v1, 0x6BE4($a0) // Get current selected sub index
+    lh $v0, 0x6BD2($a0) // Get current skill A sub index
+
+    beq $v1, $v0, wrongInputPath
+    nop
+
+    isDifferentPosition: lui $a0, 0x009D
+    lw $a3, 0x6BDC($a0) // Load current persona
+    lh $v1, 0x6BD0($a0) // Load skill A super index
+    sll $v1, $v1, 0x2
+    lh $v0, 0x6BD2($a0) // Load sub index
+    addu $v0, $v0, $v1 // Get total persona skill offset
+    sll $v0, $v0, 0x1 // Convert it to half offset for skill array
+    addiu $v1, $a3, 0xc // Get to the start of the skill array
+    addu $v0, $v0, $v1 // Current skill address
+    lhu $v1, 0x0($v0) // Get current skill half
+
+    sh $v1, 0x0($a1) // Store current skill into previous selected skill
+    sh $a2, 0x0($v0) // Store previous selected skill into current skill
+
+    addiu $a0, $a0, 0x6BD0
+    li $a1, 0x0
+    li $a2, 0xC
+    jal 0x00521408 // Reset all swap global values
+    nop
+
+    playConfirmSound: li $a0, 0x0
+    li $a1, 0x0
+    li $a2, 0x0
+    li $a3, 0x1
+    jal 0x0010a4e0 // Play confirm swap sound
+    nop
+
+    beq $zero, $zero, continuePersonaInfoDraw
+    nop
+    
+    swapConfirmNotPressed: lui $v0, 0x007e
     lhu $a2, 0x095A($v0)
     andi $v1, $a2, 0x4000
     bne $v1, $zero, downPressed

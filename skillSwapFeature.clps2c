@@ -98,9 +98,9 @@ ASM_START skillSwapHandler
     nop
 
     resetGlobals: lui $a0, 0x009D
-    addiu $a0, $a0, 0x6BE0 // Globals pointer
+    addiu $a0, $a0, 0x6BD0 // Globals pointer
     li $a1, 0x0
-    li $a2, 0x20
+    li $a2, 0x30
     jal 0x00521408 // Reset all globals when going back
     nop
 

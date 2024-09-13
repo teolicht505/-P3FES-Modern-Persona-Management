@@ -1,6 +1,12 @@
 set drawSwapMenu 0x009D7620
+set hookSkillsDraw 0x009D7A90
 
 // GLOBALS //
+// 0x009D6BD0 -> Skill A Super Index
+// 0x009D6BD2 -> Skill A Sub Index
+
+// 0x009D6BD8 -> First skill swap chosen
+// 0x009D6BDC -> Current persona quick access
 // 0x009D6BE0 -> Super Index
 // 0x009D6BE4 -> Sub Index
 // 0x009D6BE8 -> Current persona number of next skill list
@@ -8,10 +14,6 @@ set drawSwapMenu 0x009D7620
 // 0x009D6BF0 -> Current persona next skill list
 // GLOBALS //
 
-ASM_START 0x0012BBB8
-    j 0x009D7620
-    nop
-ASM_END
 
 ASM_START drawSwapMenu
     jal 0x001159f0 // Draw SPR original call
@@ -112,7 +114,6 @@ ASM_START drawSwapMenu
     nop
 
 
-
     li $v0, 0x12e // Skill help X
     mtc1 $v0, $f22
     cvt.s.w $f22, $f22
@@ -135,7 +136,6 @@ ASM_START drawSwapMenu
     addiu $t2,$zero,0x00
     jal 0x001159f0
     nop
-
 
 
     // DRAW CURRENT SELECTED SKILL DESCRIPTION //
@@ -199,5 +199,35 @@ ASM_START drawSwapMenu
 
     addiu $sp, $sp, 0xe0
     j 0x0012BBC0
+    nop
+ASM_END
+
+
+ASM_START 0x0012958C
+    j 0x009D7A90
+    andi $a0,$v1,0xFFFF
+ASM_END
+
+
+ASM_START hookSkillsDraw
+    lui $v0, 0x009D
+    lh $v1, 0x6BD8($v0) // Load first skill swap chosen flag
+    beq $v1, $zero, normalPath
+    nop
+
+    lh $v1, 0x6BD0($v0) // Load skill A super index
+    bne $v1, $s2, normalPath
+    nop
+
+    lh $v1, 0x6BD2($v0) // Load skill A sub index
+    bne $v1, $s1, normalPath
+    nop
+
+    j 0x00129610 // Go to "green skill print" to mark the first selected skill
+    nop
+
+    normalPath: move $v1, $a0
+    sll $v0, $v1, 0x03
+    j 0x00129594
     nop
 ASM_END

@@ -14,6 +14,10 @@ set hookSkillsDraw 0x009D7A90
 // 0x009D6BF0 -> Current persona next skill list
 // GLOBALS //
 
+ASM_START 0x0012BBB8
+    j 0x009D7620
+    nop
+ASM_END
 
 ASM_START drawSwapMenu
     jal 0x001159f0 // Draw SPR original call

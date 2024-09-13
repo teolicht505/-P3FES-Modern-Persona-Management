@@ -17,7 +17,7 @@ However, in the current version of the compiler (1.0.1 at the time of writing), 
 Special thanks to:
 
 - [NiV-L-A](https://github.com/NiV-L-A) for creating the CLPS2C-Compiler.
-- [alexankitty](https://github.com/alexankitty) for the keystone pull request that fixes the compilation bug and for giving me tips during the mod creation.
+- [alexankitty](https://github.com/alexankitty) for the keystone pull request that fixes the compilation bug.
 - The Persona modding community for their continuous support and feedback.
 
 Your contributions and support are greatly appreciated!

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<Metadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <name>Modern Persona Management</name>
+  <id>teolicht.modernpersonamanagement</id>
+  <author>teolicht</author>
+  <version>1.0</version>
+  <link>Tbd</link>
+  <description>This mod for Persona 3 FES adds quality-of-life improvements to the camp menu, allowing for persona management by swapping their order with L1/R1, quickly assigning them with Triangle and viewing persona skill descriptions or reordering them with Square.</description>
+</Metadata>

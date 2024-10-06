@@ -2,7 +2,7 @@
 ## Description
 This mod for Persona 3 FES introduces several quality-of-life improvements to the camp menu, allowing for more efficient management of personas and their skills.
 
-![](Modern Persona Management/preview.png)
+![](Modern%20Persona%20Management/preview.png)
 
 ### Features
 - Swap Persona's Order Quickly: Press L1/R1 to swap the current persona with your upper/down persona respectively.
